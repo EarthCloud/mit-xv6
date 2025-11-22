@@ -9,12 +9,15 @@
 主要参考和使用的页面与链接：
 
 课程官网：
+
 [6.S081 Fall 2020](https://pdos.csail.mit.edu/6.828/2020/xv6.html)
 
 原文教材：
+
 [xv6: a simple, Unix-like teaching operating system](https://pdos.csail.mit.edu/6.828/2020/xv6/book-riscv-rev1.pdf)
 
 本地化资料：
+
 [All in One Gitbook](https://xv6.dgs.zone/)
 
 [S081 公开课视频中文翻译Gitbook](https://mit-public-courses-cn-translatio.gitbook.io/mit6-s081/)
