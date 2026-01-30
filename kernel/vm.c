@@ -53,6 +53,11 @@ void kvminit()
   kernel_pagetable = kvmmake();
 }
 
+pagetable_t kvm_prockpgtb(){
+  pagetable_t kpgtb = kvmmake();
+  proc_mapkstacks(kpgtb);
+  return kpgtb;
+}
 // Switch h/w page table register to the kernel's page table,
 // and enable paging.
 void kvminithart()
