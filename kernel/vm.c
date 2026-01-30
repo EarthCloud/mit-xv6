@@ -41,6 +41,8 @@ pagetable_t kvmmake(){
   // map the trampoline for trap entry/exit to
   // the highest virtual address in the kernel.
   kvmmap(pgtbl, TRAMPOLINE, (uint64)trampoline, PGSIZE, PTE_R | PTE_X);
+
+  return pgtbl;
 }
 
 /*
