@@ -38,19 +38,6 @@ void procinit(void)
   kvminithart();
 }
 
-// Map all the stacks for proc kpgtb (deprecated)
-void proc_mapkstacks(pagetable_t kpagetable)
-{
-  for (struct proc *p = proc; p < &proc[NPROC]; p++)
-  {
-    uint64 va=p->kstack;
-    if (va==0)
-      continue;
-    uint64 pa = kvmpa(va);
-    kvmmap(kpagetable, va, pa, PGSIZE, PTE_R | PTE_W);
-  }
-}
-
 // Must be called with interrupts disabled,
 // to prevent race with process being moved
 // to a different CPU.
@@ -174,6 +161,8 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if (p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
+  if(p->kpagetable)
+    
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
@@ -518,11 +507,16 @@ void scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
+        // Switch to chosen process's kernel page table
+        w_satp(MAKE_SATP(p->kpagetable));
+        sfence_vma();
+
         swtch(&c->context, &p->context);
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
         c->proc = 0;
+        kvminithart();
 
         found = 1;
       }
