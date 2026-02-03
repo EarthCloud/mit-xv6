@@ -321,6 +321,25 @@ void uvmfree(pagetable_t pagetable, uint64 sz)
   freewalk(pagetable);
 }
 
+// Tolerantly free the page table structure,
+// for freewalk, it frees the leaf's page,
+// this will only free page table itself
+void kvmfree(pagetable_t kpagetable)
+{
+  for (int i = 0; i < PGSIZE / sizeof(pte_t); i++)
+  {
+    pte_t pte = kpagetable[i];
+    if ((pte & PTE_V) && ((pte & (PTE_R | PTE_W | PTE_X)) == 0))
+    {
+      // this PTE points to a lower-level page table.
+      kvmfree((pagetable_t)PTE2PA(pte));
+      kpagetable[i] = 0;
+    }
+  }
+  // Release kernel pagetable itself
+  kfree((void *)kpagetable);
+}
+
 // Given a parent process's page table, copy
 // its memory into a child's page table.
 // Copies both the page table and the
