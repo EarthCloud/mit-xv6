@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -15,7 +17,8 @@ extern char etext[]; // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
 
-pagetable_t kvmmake(){
+pagetable_t kvmmake()
+{
 
   pagetable_t pgtbl = (pagetable_t)kalloc();
   memset(pgtbl, 0, PGSIZE);
@@ -123,7 +126,7 @@ walkaddr(pagetable_t pagetable, uint64 va)
 // add a mapping to the kernel page table.
 // only used when booting.
 // does not flush TLB or enable paging.
-void kvmmap(pagetable_t pagetable,uint64 va, uint64 pa, uint64 sz, int perm)
+void kvmmap(pagetable_t pagetable, uint64 va, uint64 pa, uint64 sz, int perm)
 {
   if (mappages(pagetable, va, sz, pa, perm) != 0)
     panic("kvmmap");
@@ -139,8 +142,13 @@ kvmpa(uint64 va)
   uint64 off = va % PGSIZE;
   pte_t *pte;
   uint64 pa;
+  pagetable_t kpt = kernel_pagetable;
 
-  pte = walk(kernel_pagetable, va, 0);
+  struct proc *p = myproc();
+  if(p!=0)
+    kpt = p->kpagetable;
+    
+  pte = walk(kpt, va, 0);
   if (pte == 0)
     panic("kvmpa");
   if ((*pte & PTE_V) == 0)
@@ -472,14 +480,15 @@ static void walkprint(pagetable_t pagetable, int level)
     if (!(pte & PTE_V))
       continue;
 
-    for (int j = 0; j < level; j++){
-      if(j!=0)
+    for (int j = 0; j < level; j++)
+    {
+      if (j != 0)
         printf(" ");
       printf("..");
     }
     printf("%d: pte %p pa %p\n", i, pte, pa);
 
-    if (level<3 && (pte & PTE_V) && ((pte & (PTE_R | PTE_W | PTE_X)) == 0))
+    if (level < 3 && (pte & PTE_V) && ((pte & (PTE_R | PTE_W | PTE_X)) == 0))
       walkprint((pagetable_t)pa, level + 1);
   }
 }
