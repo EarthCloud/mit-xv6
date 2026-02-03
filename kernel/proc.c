@@ -21,7 +21,6 @@ static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
 
-extern pagetable_t kernel_pagetable;
 
 // initialize the proc table at boot time.
 void procinit(void)
@@ -33,19 +32,13 @@ void procinit(void)
   {
     initlock(&p->lock, "proc");
 
-    // Allocate a page for the process's kernel stack.
-    // Map it high in memory, followed by an invalid
-    // guard page.
-    char *pa = kalloc();
-    if (pa == 0)
-      panic("kalloc");
     uint64 va = KSTACK((int)(p - proc));
-    kvmmap(kernel_pagetable, va, (uint64)pa, PGSIZE, PTE_R | PTE_W);
     p->kstack = va;
   }
   kvminithart();
 }
 
+// Map all the stacks for proc kpgtb (deprecated)
 void proc_mapkstacks(pagetable_t kpagetable)
 {
   for (struct proc *p = proc; p < &proc[NPROC]; p++)
@@ -141,6 +134,25 @@ found:
     release(&p->lock);
     return 0;
   }
+
+  // Allocate a page for the process's kernel stack.
+  // Map it high in memory, followed by an invalid
+  // guard page.
+  p->kpagetable = kvmmake();
+  if (p->kpagetable == 0)
+  {
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  char *pa = kalloc();
+  if (pa == 0)
+  {
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+  kvmmap(p->kpagetable, p->kstack, (uint64)pa, PGSIZE, PTE_R | PTE_W);
 
   // Set up new context to start executing at forkret,
   // which returns to user space.
