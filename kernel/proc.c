@@ -162,13 +162,12 @@ freeproc(struct proc *p)
     proc_freepagetable(p->pagetable, p->sz);
   if (p->kpagetable)
   {
-    // free kernel stack
-    uint64 stack_pa = kvmpa(p->kstack);
-    kfree((void *)stack_pa);
+    // free the kernel stack in the RAM
+    uvmunmap(p->kpagetable, p->kstack, 1, 1);
     // free kernel page table
     kvmfree(p->kpagetable);
   }
-
+  p->kpagetable = 0;
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
