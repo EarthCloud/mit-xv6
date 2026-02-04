@@ -163,6 +163,7 @@ void            kvminithart(void);
 pagetable_t     kvmmake();
 uint64          kvmpa(uint64);
 void            kvmmap(pagetable_t ,uint64, uint64, uint64, int);
+void            kvmfree(pagetable_t kpagetable);
 int             mappages(pagetable_t, uint64, uint64, uint64, int);
 pagetable_t     uvmcreate(void);
 void            uvminit(pagetable_t, uchar *, uint);

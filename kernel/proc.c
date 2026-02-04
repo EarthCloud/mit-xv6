@@ -21,7 +21,6 @@ static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
 
-
 // initialize the proc table at boot time.
 void procinit(void)
 {
@@ -161,8 +160,15 @@ freeproc(struct proc *p)
   p->trapframe = 0;
   if (p->pagetable)
     proc_freepagetable(p->pagetable, p->sz);
-  if(p->kpagetable)
-    
+  if (p->kpagetable)
+  {
+    // free kernel stack
+    uint64 stack_pa = kvmpa(p->kstack);
+    kfree((void *)stack_pa);
+    // free kernel page table
+    kvmfree(p->kpagetable);
+  }
+
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
