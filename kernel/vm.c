@@ -145,9 +145,9 @@ kvmpa(uint64 va)
   pagetable_t kpt = kernel_pagetable;
 
   struct proc *p = myproc();
-  if(p!=0)
+  if (p != 0)
     kpt = p->kpagetable;
-    
+
   pte = walk(kpt, va, 0);
   if (pte == 0)
     panic("kvmpa");
@@ -155,6 +155,35 @@ kvmpa(uint64 va)
     panic("kvmpa");
   pa = PTE2PA(*pte);
   return pa + off;
+}
+
+// Given a user pagetable upt, only copy the
+// page table entries to kernel page table kpt,
+// start at 0x0, same sz as upt,
+// returns 0 on success, -1 on failure
+int kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 sz)
+{
+  if (sz >= PLIC)
+    panic("kvmcopy: uvm too large");
+
+  pte_t *pte, *kpte;
+  uint64 pa, i;
+  for (i = 0; i < sz; i += PGSIZE)
+  {
+    if ((pte = walk(upt, i, 0)) == 0)
+      panic("kvmcopy: upte should exist");
+    if ((*pte & PTE_V) == 0)
+      panic("kvmcopy: page not present");
+    pa = PTE2PA(*pte);
+    // create new kpte map to pte
+    if ((kpte = walk(kpt, i, 1)) == 0)
+    {
+      uvmunmap(kpt, 0, i / PGSIZE, 0);
+      return -1;
+    }
+    *kpte = PA2PTE(pa) | (PTE_FLAGS(*pte) & (~PTE_U));
+  }
+  return 0;
 }
 
 // Create PTEs for virtual addresses starting at va that refer to
@@ -501,7 +530,7 @@ static void walkprint(pagetable_t pagetable, int level)
     // xv6 的内核栈位于虚拟地址的最高处 (0x3ffff...)。
     // 这对应于 L2 和 L1 页表的最后一个条目 (索引 511)。
     // 如果不是在查最后一个条目，直接跳过。
-    // if(level == 1 && i != 255) continue; 
+    // if(level == 1 && i != 255) continue;
     // if(level == 2 && i != 511) continue;
     // ---------------------------------------------------------
     if (!(pte & PTE_V))
