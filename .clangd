@@ -2,6 +2,7 @@ If:
   PathMatch: .*\.h        # 仅针对所有 .h 后缀的文件生效
 
 CompileFlags:
-  Add: 
-    - "-include"          # 相当于 gcc/clang 的 -include 参数
-    - "kernel/types.h"    # 强制在文件开头引入 types.h
+  Suppress:
+      - "unknown_type_name"   # 屏蔽 uint64, pde_t 这类类型报错
+      - "undeclared_var_use"  # 屏蔽 NPROC, PGSIZE 这类宏或变量报错
+      - "pp_macro_not_defined" # 屏蔽宏未定义的警告
