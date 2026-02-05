@@ -12,14 +12,14 @@
 #define BUFSZ 4096
 static struct {
   struct spinlock lock;
-  char buf[BUFSZ];
-  int sz;
-  int off;
+  char            buf[BUFSZ];
+  int             sz;
+  int             off;
 } stats;
 
-int statscopyin(char*, int);
-int statslock(char*, int);
-  
+int statscopyin(char *, int);
+int statslock(char *, int);
+
 int
 statswrite(int user_src, uint64 src, int n)
 {
@@ -43,15 +43,15 @@ statsread(int user_dst, uint64 dst, int n)
   }
   m = stats.sz - stats.off;
 
-  if (m > 0) {
+  if(m > 0) {
     if(m > n)
-      m  = n;
-    if(either_copyout(user_dst, dst, stats.buf+stats.off, m) != -1) {
+      m = n;
+    if(either_copyout(user_dst, dst, stats.buf + stats.off, m) != -1) {
       stats.off += m;
     }
   } else {
-    m = -1;
-    stats.sz = 0;
+    m         = -1;
+    stats.sz  = 0;
     stats.off = 0;
   }
   release(&stats.lock);
@@ -63,7 +63,6 @@ statsinit(void)
 {
   initlock(&stats.lock, "stats");
 
-  devsw[STATS].read = statsread;
+  devsw[STATS].read  = statsread;
   devsw[STATS].write = statswrite;
 }
-
