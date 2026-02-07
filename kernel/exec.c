@@ -115,6 +115,17 @@ exec(char *path, char **argv)
   p->sz             = sz;
   p->trapframe->epc = elf.entry; // initial program counter = main
   p->trapframe->sp  = sp;        // initial stack pointer
+
+  // Remove the original user memory space mapped
+  // in the kernel page table
+  kvmunmap(p->kpagetable, 0, PGROUNDUP(oldsz) / PGSIZE, 0);
+  // Map new user memory space to kernel page table
+  if(kvmcopy_mappings(p->pagetable, p->kpagetable, 0, p->sz) < 0) {
+    // Rollback
+    p->pagetable = oldpagetable;
+    p->sz        = oldsz;
+    goto bad;
+  }
   proc_freepagetable(oldpagetable, oldsz);
 
   if(p->pid == 1)

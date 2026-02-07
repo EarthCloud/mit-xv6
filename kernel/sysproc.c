@@ -47,6 +47,10 @@ sys_sbrk(void)
   if(argint(0, &n) < 0)
     return -1;
   addr = myproc()->sz;
+
+  // If the va grows over PLIC, just return -1
+  if(n > 0 && addr + n >= PLIC)
+    return -1;
   if(growproc(n) < 0)
     return -1;
   return addr;

@@ -160,7 +160,7 @@ kvmpa(uint64 va)
 
 // Given a user pagetable upt, only copy the
 // page table entries to kernel page table kpt,
-// start at 0x0, end at end_va,
+// start at va, end at end_va,
 // returns 0 on success, -1 on failure
 int
 kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 va, uint64 end_va)
@@ -172,9 +172,9 @@ kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 va, uint64 end_va)
   uint64 pa, i;
   for(i = va; i < end_va; i += PGSIZE) {
     if((pte = walk(upt, i, 0)) == 0)
-      panic("kvmcopy: upte should exist");
+      continue;
     if((*pte & PTE_V) == 0)
-      panic("kvmcopy: page not present");
+      continue;
     pa = PTE2PA(*pte);
     // create new kpte map to pte
     if((kpte = walk(kpt, i, 1)) == 0) {
@@ -184,6 +184,34 @@ kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 va, uint64 end_va)
     *kpte = PA2PTE(pa) | (PTE_FLAGS(*pte) & (~PTE_U));
   }
   return 0;
+}
+
+// Remove npages of mappings starting from va. va must be
+// page-aligned. The mappings may not be exist.
+// Used for removing user page map in the kernel page table. 
+// Optionally free the physical memory.
+void
+kvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
+{
+  uint64 a;
+  pte_t *pte;
+
+  if((va % PGSIZE) != 0)
+    panic("uvmunmap: not aligned");
+
+  for(a = va; a < va + npages * PGSIZE; a += PGSIZE) {
+    if((pte = walk(pagetable, a, 0)) == 0)
+      continue;
+    if((*pte & PTE_V) == 0)
+      continue;
+    if(PTE_FLAGS(*pte) == PTE_V)
+      panic("uvmunmap: not a leaf");
+    if(do_free) {
+      uint64 pa = PTE2PA(*pte);
+      kfree((void *)pa);
+    }
+    *pte = 0;
+  }
 }
 
 // Create PTEs for virtual addresses starting at va that refer to

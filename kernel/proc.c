@@ -238,6 +238,11 @@ userinit(void)
   // and data into it.
   uvminit(p->pagetable, initcode, sizeof(initcode));
   p->sz = PGSIZE;
+  // Sync maps to proc's kernel pagetable,
+  // or the exec will fail
+  if(kvmcopy_mappings(p->pagetable, p->kpagetable, 0, p->sz) < 0) {
+    panic("userinit: kvmcopy_mappings");
+  }
 
   // prepare for the very first "return" from kernel to user.
   p->trapframe->epc = 0;      // user program counter
@@ -256,16 +261,28 @@ userinit(void)
 int
 growproc(int n)
 {
-  uint         sz;
+  uint         sz, oldsz;
   struct proc *p = myproc();
 
   sz = p->sz;
   if(n > 0) {
+    oldsz = sz;
     if((sz = uvmalloc(p->pagetable, sz, sz + n)) == 0) {
+      return -1;
+    }
+    if(kvmcopy_mappings(p->pagetable, p->kpagetable, oldsz, oldsz + n) < 0) {
+      // Rollback
+      uvmdealloc(p->pagetable, sz, oldsz);
       return -1;
     }
   } else if(n < 0) {
     sz = uvmdealloc(p->pagetable, sz, sz + n);
+    // Shrink kernel page table
+    oldsz = p->sz;
+    if(PGROUNDUP(sz) < PGROUNDUP(oldsz)) {
+      int npages = (PGROUNDUP(oldsz) - PGROUNDUP(sz)) / PGSIZE;
+      kvmunmap(p->kpagetable, PGROUNDUP(sz), npages, 0);
+    }
   }
   p->sz = sz;
   return 0;
@@ -292,7 +309,7 @@ fork(void)
     return -1;
   }
   // Copy user memory from user to kernel page table
-  if(kvmcopy_mappings(np->pagetable, np->kpagetable, 0 , p->sz)) {
+  if(kvmcopy_mappings(np->pagetable, np->kpagetable, 0, p->sz)) {
     freeproc(np);
     release(&np->lock);
     return -1;
