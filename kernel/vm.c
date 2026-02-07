@@ -486,7 +486,7 @@ new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
   if(srcva >= p->sz || srcva + len > p->sz || srcva + len < srcva)
     return -1;
 
-  memmove(dst,(void *)srcva, len);
+  memmove(dst, (void *)srcva, len);
   return 0;
 }
 
@@ -497,40 +497,24 @@ new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  uint64 n, va0, pa0;
-  int    got_null = 0;
+  return new_copyinstr(pagetable, dst, srcva, max);
+}
 
-  while(got_null == 0 && max > 0) {
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
+// New implementaion of copyinstr (use proc's kernel page table)
+int
+new_copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
+{
+  char  *p  = (char *)srcva;
+  uint64 sz = myproc()->sz;
+
+  while(max--) {
+    if((uint64)p >= sz)
       return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > max)
-      n = max;
 
-    char *p = (char *)(pa0 + (srcva - va0));
-    while(n > 0) {
-      if(*p == '\0') {
-        *dst     = '\0';
-        got_null = 1;
-        break;
-      } else {
-        *dst = *p;
-      }
-      --n;
-      --max;
-      p++;
-      dst++;
-    }
-
-    srcva = va0 + PGSIZE;
+    if((*dst++ = *p++) == '\0')
+      return 0;
   }
-  if(got_null) {
-    return 0;
-  } else {
-    return -1;
-  }
+  return -1;
 }
 
 static void
