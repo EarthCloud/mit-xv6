@@ -291,6 +291,12 @@ fork(void)
     release(&np->lock);
     return -1;
   }
+  // Copy user memory from user to kernel page table
+  if(kvmcopy_mappings(np->pagetable, np->kpagetable, p->sz)) {
+    freeproc(np);
+    release(&np->lock);
+    return -1;
+  }
   np->sz = p->sz;
 
   np->parent = p;
