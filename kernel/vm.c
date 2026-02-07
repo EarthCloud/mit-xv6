@@ -160,17 +160,17 @@ kvmpa(uint64 va)
 
 // Given a user pagetable upt, only copy the
 // page table entries to kernel page table kpt,
-// start at 0x0, same sz as upt,
+// start at 0x0, end at end_va,
 // returns 0 on success, -1 on failure
 int
-kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 sz)
+kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 va, uint64 end_va)
 {
-  if(sz >= PLIC)
+  if(end_va >= PLIC)
     panic("kvmcopy: uvm too large");
-
+  va = PGROUNDUP(va);
   pte_t *pte, *kpte;
   uint64 pa, i;
-  for(i = 0; i < sz; i += PGSIZE) {
+  for(i = va; i < end_va; i += PGSIZE) {
     if((pte = walk(upt, i, 0)) == 0)
       panic("kvmcopy: upte should exist");
     if((*pte & PTE_V) == 0)
@@ -178,7 +178,7 @@ kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 sz)
     pa = PTE2PA(*pte);
     // create new kpte map to pte
     if((kpte = walk(kpt, i, 1)) == 0) {
-      uvmunmap(kpt, 0, i / PGSIZE, 0);
+      uvmunmap(kpt, va, (i - va) / PGSIZE, 0);
       return -1;
     }
     *kpte = PA2PTE(pa) | (PTE_FLAGS(*pte) & (~PTE_U));

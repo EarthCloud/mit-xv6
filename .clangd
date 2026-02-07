@@ -1,8 +1,9 @@
 If:
-  PathMatch: .*\.h        # 仅针对所有 .h 后缀的文件生效
+    PathMatch: .*\.h
 
-CompileFlags:
-  Suppress:
-      - "unknown_type_name"   # 屏蔽 uint64, pde_t 这类类型报错
-      - "undeclared_var_use"  # 屏蔽 NPROC, PGSIZE 这类宏或变量报错
-      - "pp_macro_not_defined" # 屏蔽宏未定义的警告
+Diagnostics:
+    Suppress: 
+        - "unknown-typename"
+        - "undeclared_var_use"
+        - "undeclared_var_use"
+        - "implicit-int"
