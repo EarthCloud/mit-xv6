@@ -17,6 +17,9 @@ extern char etext[]; // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
 
+int new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len);
+int new_copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max);
+
 pagetable_t
 kvmmake()
 {
@@ -188,7 +191,7 @@ kvmcopy_mappings(pagetable_t upt, pagetable_t kpt, uint64 va, uint64 end_va)
 
 // Remove npages of mappings starting from va. va must be
 // page-aligned. The mappings may not be exist.
-// Used for removing user page map in the kernel page table. 
+// Used for removing user page map in the kernel page table.
 // Optionally free the physical memory.
 void
 kvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
@@ -471,22 +474,19 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  uint64 n, va0, pa0;
+  return new_copyin(pagetable, dst, srcva, len);
+}
 
-  while(len > 0) {
-    va0 = PGROUNDDOWN(srcva);
-    pa0 = walkaddr(pagetable, va0);
-    if(pa0 == 0)
-      return -1;
-    n = PGSIZE - (srcva - va0);
-    if(n > len)
-      n = len;
-    memmove(dst, (void *)(pa0 + (srcva - va0)), n);
+// New implementaion of copyin (use proc's kernel page table)
+int
+new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
+{
+  struct proc *p = myproc();
 
-    len -= n;
-    dst += n;
-    srcva = va0 + PGSIZE;
-  }
+  if(srcva >= p->sz || srcva + len > p->sz || srcva + len < srcva)
+    return -1;
+
+  memmove(dst,(void *)srcva, len);
   return 0;
 }
 
