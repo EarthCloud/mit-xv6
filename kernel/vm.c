@@ -17,9 +17,6 @@ extern char etext[]; // kernel.ld sets this to end of kernel code.
 
 extern char trampoline[]; // trampoline.S
 
-int new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len);
-int new_copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max);
-
 pagetable_t
 kvmmake()
 {
@@ -471,15 +468,9 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 // Copy from user to kernel.
 // Copy len bytes to dst from virtual address srcva in a given page table.
 // Return 0 on success, -1 on error.
-int
-copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
-{
-  return new_copyin(pagetable, dst, srcva, len);
-}
-
 // New implementaion of copyin (use proc's kernel page table)
 int
-new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
+copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
   struct proc *p = myproc();
 
@@ -494,15 +485,9 @@ new_copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 // Copy bytes to dst from virtual address srcva in a given page table,
 // until a '\0', or max.
 // Return 0 on success, -1 on error.
-int
-copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
-{
-  return new_copyinstr(pagetable, dst, srcva, max);
-}
-
 // New implementaion of copyinstr (use proc's kernel page table)
 int
-new_copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
+copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
   char  *p  = (char *)srcva;
   uint64 sz = myproc()->sz;
@@ -523,15 +508,6 @@ walkprint(pagetable_t pagetable, int level)
   for(int i = 0; i < PGSIZE / sizeof(pte_t); i++) {
     pte_t  pte = pagetable[i];
     uint64 pa  = PTE2PA(pte);
-    // ---------------------------------------------------------
-    // 🔍 【关键修改】 过滤器
-    // ---------------------------------------------------------
-    // xv6 的内核栈位于虚拟地址的最高处 (0x3ffff...)。
-    // 这对应于 L2 和 L1 页表的最后一个条目 (索引 511)。
-    // 如果不是在查最后一个条目，直接跳过。
-    // if(level == 1 && i != 255) continue;
-    // if(level == 2 && i != 511) continue;
-    // ---------------------------------------------------------
     if(!(pte & PTE_V))
       continue;
 
