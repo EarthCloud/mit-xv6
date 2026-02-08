@@ -472,13 +472,7 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 int
 copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 {
-  struct proc *p = myproc();
-
-  if(srcva >= p->sz || srcva + len > p->sz || srcva + len < srcva)
-    return -1;
-
-  memmove(dst, (void *)srcva, len);
-  return 0;
+  return copyin_new(pagetable, dst, srcva, len);
 }
 
 // Copy a null-terminated string from user to kernel.
@@ -489,17 +483,7 @@ copyin(pagetable_t pagetable, char *dst, uint64 srcva, uint64 len)
 int
 copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 {
-  char  *p  = (char *)srcva;
-  uint64 sz = myproc()->sz;
-
-  while(max--) {
-    if((uint64)p >= sz)
-      return -1;
-
-    if((*dst++ = *p++) == '\0')
-      return 0;
-  }
-  return -1;
+  return copyinstr_new(pagetable, dst, srcva, max);
 }
 
 static void
