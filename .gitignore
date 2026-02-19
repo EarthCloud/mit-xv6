@@ -25,3 +25,4 @@ barrier
 .cache/
 .clang-format
 .clangd
+format-project.sh

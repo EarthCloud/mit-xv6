@@ -16,7 +16,7 @@
 int
 main(int argc, char *argv[])
 {
-  int fd, i;
+  int  fd, i;
   char path[] = "stressfs0";
   char data[512];
 
@@ -32,14 +32,14 @@ main(int argc, char *argv[])
   path[8] += i;
   fd = open(path, O_CREATE | O_RDWR);
   for(i = 0; i < 20; i++)
-//    printf(fd, "%d\n", i);
+    //    printf(fd, "%d\n", i);
     write(fd, data, sizeof(data));
   close(fd);
 
   printf("read\n");
 
   fd = open(path, O_RDONLY);
-  for (i = 0; i < 20; i++)
+  for(i = 0; i < 20; i++)
     read(fd, data, sizeof(data));
   close(fd);
 
