@@ -1,9 +1,0 @@
-If:
-    PathMatch: .*\.h
-
-Diagnostics:
-    Suppress: 
-        - "unknown-typename"
-        - "undeclared_var_use"
-        - "undeclared_var_use"
-        - "implicit-int"

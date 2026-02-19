@@ -23,3 +23,5 @@ submissions/
 ph
 barrier
 .cache/
+.clang-format
+.clangd
