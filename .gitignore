@@ -26,3 +26,4 @@ barrier
 .clang-format
 .clangd
 format-project.sh
+compile_commands.json
