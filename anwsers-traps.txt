@@ -1,0 +1,23 @@
+1. a2, a0~a7 save the params
+
+2. f and g call: inlined and computed at compile time
+   located at 0x26: 45b1                	li	a1,12
+
+3. printf: 0x616
+
+4. 0x38
+
+5. He110 World
+
+   No need to change 57616, since it is a hex
+   constant to 0xE110.
+
+   For little endian, the reading order is:
+   First, the byte 72, refers to 'r' in ASCII,
+   Second, the byte 6c, refers to 'l', and so on.  
+   So, it should be: "rld\0".
+
+   For big endian, i will equal to 0x726c6400.
+
+6. It will get the dirty data in the register a2. For my 
+   case, it is 1. 
