@@ -131,9 +131,10 @@ found:
   p->context.sp = p->kstack + PGSIZE;
 
   // Initialize alarms
-  p->alarm_ticks = 0;
-  p->handler     = 0;
-  p->interval    = 0;
+  p->alarm_ticks   = 0;
+  p->handler       = 0;
+  p->interval      = 0;
+  p->is_in_handler = 0;
   return p;
 }
 

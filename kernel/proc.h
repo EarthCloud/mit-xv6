@@ -102,8 +102,9 @@ struct proc {
   struct context    context;       // swtch() here to run process
   struct file      *ofile[NOFILE]; // Open files
   struct inode     *cwd;           // Current directory
-  uint64            alarm_ticks;   // Ticks after last alarm call
+  int               alarm_ticks;   // Ticks after last alarm call
   uint64            interval;      // Alarm intervals
-  void (*handler)(void);           // Alarm handler
-  char name[16];                   // Process name (debugging)
+  int               is_in_handler; // Flag to check if it's in handler
+  uint64            handler;       // Alarm handler
+  char              name[16];      // Process name (debugging)
 };
