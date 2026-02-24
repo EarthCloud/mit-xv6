@@ -130,6 +130,10 @@ found:
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
 
+  // Initialize alarms
+  p->alarm_ticks = 0;
+  p->handler     = 0;
+  p->interval    = 0;
   return p;
 }
 
@@ -675,11 +679,11 @@ either_copyin(void *dst, int user_src, uint64 src, uint64 len)
 void
 procdump(void)
 {
-  static char *states[] = {[UNUSED] "unused",
-                           [SLEEPING] "sleep ",
-                           [RUNNABLE] "runble",
-                           [RUNNING] "run   ",
-                           [ZOMBIE] "zombie"};
+  static char *states[] = {[UNUSED]   = "unused",
+                           [SLEEPING] = "sleep ",
+                           [RUNNABLE] = "runble",
+                           [RUNNING]  = "run   ",
+                           [ZOMBIE]   = "zombie"};
   struct proc *p;
   char        *state;
 
