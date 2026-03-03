@@ -82,6 +82,7 @@ usertrap(void)
       p->trapframe->epc = p->handler;
       p->alarm_ticks    = 0;
       p->is_in_handler  = 1;
+      memmove(p->backup_trapframe, p->trapframe, sizeof(struct trapframe));
     }
     yield();
   }
