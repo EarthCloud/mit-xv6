@@ -117,5 +117,9 @@ sys_sigalarm(void)
 uint64
 sys_sigreturn(void)
 {
+  struct proc *p = myproc();
+  // copy back trapframe, keep transparency
+  memmove(p->trapframe, p->backup_trapframe, sizeof(struct trapframe));
+  p->is_in_handler = 0;
   return 0;
 }
