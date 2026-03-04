@@ -121,5 +121,6 @@ sys_sigreturn(void)
   // copy back trapframe, keep transparency
   memmove(p->trapframe, p->backup_trapframe, sizeof(struct trapframe));
   p->is_in_handler = 0;
-  return 0;
+  p->alarm_ticks   = 0;
+  return p->trapframe->a0;
 }
