@@ -66,13 +66,9 @@ usertrap(void)
 
     syscall();
   } else if(r_scause() == 13 || r_scause() == 15) {
-    uint64 addr = r_stval();
-    if(addr > p->sz) {
-      printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
-      printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
+    if(lazy_uvmalloc(p->pagetable, r_stval()) == 0) {
       p->killed = 1;
     }
-    uvmalloc(p->pagetable, PGROUNDDOWN(addr), addr);
   } else if((which_dev = devintr()) != 0) {
     // ok
   } else {

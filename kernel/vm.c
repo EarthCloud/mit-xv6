@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -99,12 +101,13 @@ walkaddr(pagetable_t pagetable, uint64 va)
 
   if(va >= MAXVA)
     return 0;
-
   pte = walk(pagetable, va, 0);
-  if(pte == 0)
-    return 0;
-  if((*pte & PTE_V) == 0)
-    return 0;
+  if((pte == 0) || (*pte & PTE_V) == 0) {
+    if((pa = lazy_uvmalloc(pagetable, va)) == 0)
+      return 0;
+    else 
+      return pa;
+  }
   if((*pte & PTE_U) == 0)
     return 0;
   pa = PTE2PA(*pte);
@@ -181,7 +184,7 @@ uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 
   for(a = va; a < va + npages * PGSIZE; a += PGSIZE) {
     if((pte = walk(pagetable, a, 0)) == 0)
-      panic("uvmunmap: walk");
+      continue;
     if((*pte & PTE_V) == 0)
       continue;
     if(PTE_FLAGS(*pte) == PTE_V)
@@ -316,9 +319,9 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
 
   for(i = 0; i < sz; i += PGSIZE) {
     if((pte = walk(old, i, 0)) == 0)
-      panic("uvmcopy: pte should exist");
+      continue;
     if((*pte & PTE_V) == 0)
-      panic("uvmcopy: page not present");
+      continue;
     pa    = PTE2PA(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -440,4 +443,29 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+// When lazy allocation cause page fault,
+// call this function to alloc one page.
+// Return 0 when allocation fail
+// pa when allocation succeed,
+uint64
+lazy_uvmalloc(pagetable_t pagetable, uint64 va)
+{
+  struct proc *p = myproc();
+  if(va >= p->sz || va < p->trapframe->sp) {
+    return 0;
+  }
+  // allocate this page
+  uint64 fault_addr = PGROUNDDOWN(va);
+  char  *mem;
+  if((mem = kalloc()) == 0)
+    return 0;
+  memset(mem, 0, PGSIZE);
+  if(mappages(pagetable, fault_addr, PGSIZE, (uint64)mem,
+              PTE_W | PTE_R | PTE_U) != 0) {
+    kfree(mem);
+    return 0;
+  }
+  return (uint64)mem;
 }
