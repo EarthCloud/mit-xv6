@@ -8,7 +8,7 @@ void main();
 void timerinit();
 
 // entry.S needs one stack per CPU.
-__attribute__ ((aligned (16))) char stack0[4096 * NCPU];
+__attribute__((aligned(16))) char stack0[4096 * NCPU];
 
 // scratch area for timer interrupt, one per CPU.
 uint64 mscratch0[NCPU * 32];
@@ -61,15 +61,15 @@ timerinit()
 
   // ask the CLINT for a timer interrupt.
   int interval = 1000000; // cycles; about 1/10th second in qemu.
-  *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;
+  *(uint64 *)CLINT_MTIMECMP(id) = *(uint64 *)CLINT_MTIME + interval;
 
   // prepare information in scratch[] for timervec.
   // scratch[0..3] : space for timervec to save registers.
   // scratch[4] : address of CLINT MTIMECMP register.
   // scratch[5] : desired interval (in cycles) between timer interrupts.
   uint64 *scratch = &mscratch0[32 * id];
-  scratch[4] = CLINT_MTIMECMP(id);
-  scratch[5] = interval;
+  scratch[4]      = CLINT_MTIMECMP(id);
+  scratch[5]      = interval;
   w_mscratch((uint64)scratch);
 
   // set the machine-mode trap handler.
