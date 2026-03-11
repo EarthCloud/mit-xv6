@@ -9,6 +9,12 @@
 #include "riscv.h"
 #include "defs.h"
 
+// ref count array
+struct {
+  struct spinlock lock;
+  int             count[PHYSTOP / PGSIZE];
+} ref;
+
 void freerange(void *pa_start, void *pa_end);
 
 extern char end[]; // first address after kernel.
@@ -27,6 +33,7 @@ void
 kinit()
 {
   initlock(&kmem.lock, "kmem");
+  initlock(&ref.lock, "ref_count");
   freerange(end, (void *)PHYSTOP);
 }
 
@@ -79,4 +86,14 @@ kalloc(void)
   if(r)
     memset((char *)r, 5, PGSIZE); // fill with junk
   return (void *)r;
+}
+
+void
+kaddref(void *pa)
+{
+  int idx = (uint64)pa / PGSIZE;
+  // add must be locked
+  acquire(&ref.lock);
+  ref.count[idx]++;
+  release(&ref.lock);
 }
