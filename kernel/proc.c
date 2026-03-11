@@ -672,11 +672,11 @@ either_copyin(void *dst, int user_src, uint64 src, uint64 len)
 void
 procdump(void)
 {
-  static char *states[] = {[UNUSED] "unused",
-                           [SLEEPING] "sleep ",
-                           [RUNNABLE] "runble",
-                           [RUNNING] "run   ",
-                           [ZOMBIE] "zombie"};
+  static char *states[] = {[UNUSED]   = "unused",
+                           [SLEEPING] = "sleep ",
+                           [RUNNABLE] = "runble",
+                           [RUNNING]  = "run   ",
+                           [ZOMBIE]   = "zombie"};
   struct proc *p;
   char        *state;
 
