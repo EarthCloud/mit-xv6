@@ -66,7 +66,7 @@ usertrap(void)
 
     syscall();
   } else if(r_scause() == 15) {
-    if(cow_fault_handler(r_stval()) != 0) {
+    if(cow_fault_handler(p->pagetable,r_stval()) != 0) {
       p->killed=1;
     }
   } else if((which_dev = devintr()) != 0) {

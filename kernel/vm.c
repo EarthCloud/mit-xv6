@@ -365,9 +365,20 @@ int
 copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
   uint64 n, va0, pa0;
+  pte_t *pte;
 
   while(len > 0) {
     va0 = PGROUNDDOWN(dstva);
+    // firstly check to avoid panic
+    if (va0>=MAXVA) {
+      return -1;
+    }
+    pte = walk(pagetable, va0, 0);
+    if(pte != 0 && (*pte & PTE_V) && (*pte & PTE_U) && (*pte & PTE_C)) {
+      if(cow_fault_handler(pagetable, va0) != 0) {
+        return -1;
+      }
+    }
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
       return -1;
@@ -455,19 +466,18 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
 // Return 0 when success
 // -1 on failure
 int
-cow_fault_handler(uint64 va)
+cow_fault_handler(pagetable_t pagetable, uint64 va)
 {
-  pte_t       *pte;
-  uint64       pa;
-  uint         new_flags;
-  char        *mem;
-  struct proc *p = myproc();
+  pte_t *pte;
+  uint64 pa;
+  uint   new_flags;
+  char  *mem;
 
-  if(va >= p->sz)
+  if(va >= MAXVA)
     return -1;
   va = PGROUNDDOWN(va);
   // check if the pte is valid and cow page
-  if((pte = walk(p->pagetable, va, 0)) == 0)
+  if((pte = walk(pagetable, va, 0)) == 0)
     return -1;
   if((*pte & PTE_V) == 0)
     return -1;
