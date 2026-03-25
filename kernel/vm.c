@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -447,4 +449,40 @@ copyinstr(pagetable_t pagetable, char *dst, uint64 srcva, uint64 max)
   } else {
     return -1;
   }
+}
+
+// When write to cow page, use this to handle
+// Return 0 when success
+// -1 on failure
+int
+cow_fault_handler(uint64 va)
+{
+  pte_t       *pte;
+  uint64       pa;
+  uint         new_flags;
+  char        *mem;
+  struct proc *p = myproc();
+
+  if(va >= p->sz)
+    return -1;
+  va = PGROUNDDOWN(va);
+  // check if the pte is valid and cow page
+  if((pte = walk(p->pagetable, va, 0)) == 0)
+    return -1;
+  if((*pte & PTE_V) == 0)
+    return -1;
+  if((*pte & PTE_C) == 0)
+    return -1;
+
+  pa        = PTE2PA(*pte);
+  new_flags = (PTE_FLAGS(*pte) & (~PTE_C)) | PTE_W;
+  if((mem = kalloc()) == 0)
+    return -1;
+
+  memmove(mem, (char *)pa, PGSIZE);
+  *pte = PA2PTE((uint64)mem) | new_flags;
+
+  kfree((void *)pa);
+  sfence_vma();
+  return 0;
 }
