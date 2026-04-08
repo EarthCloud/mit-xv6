@@ -3,7 +3,7 @@
 #include "kernel/fcntl.h"
 #include "user/user.h"
 
-char*
+char *
 strcpy(char *s, const char *t)
 {
   char *os;
@@ -32,33 +32,33 @@ strlen(const char *s)
   return n;
 }
 
-void*
+void *
 memset(void *dst, int c, uint n)
 {
-  char *cdst = (char *) dst;
-  int i;
-  for(i = 0; i < n; i++){
+  char *cdst = (char *)dst;
+  int   i;
+  for(i = 0; i < n; i++) {
     cdst[i] = c;
   }
   return dst;
 }
 
-char*
+char *
 strchr(const char *s, char c)
 {
   for(; *s; s++)
     if(*s == c)
-      return (char*)s;
+      return (char *)s;
   return 0;
 }
 
-char*
+char *
 gets(char *buf, int max)
 {
-  int i, cc;
+  int  i, cc;
   char c;
 
-  for(i=0; i+1 < max; ){
+  for(i = 0; i + 1 < max;) {
     cc = read(0, &c, 1);
     if(cc < 1)
       break;
@@ -91,19 +91,19 @@ atoi(const char *s)
 
   n = 0;
   while('0' <= *s && *s <= '9')
-    n = n*10 + *s++ - '0';
+    n = n * 10 + *s++ - '0';
   return n;
 }
 
-void*
+void *
 memmove(void *vdst, const void *vsrc, int n)
 {
-  char *dst;
+  char       *dst;
   const char *src;
 
   dst = vdst;
   src = vsrc;
-  if (src > dst) {
+  if(src > dst) {
     while(n-- > 0)
       *dst++ = *src++;
   } else {
@@ -119,8 +119,8 @@ int
 memcmp(const void *s1, const void *s2, uint n)
 {
   const char *p1 = s1, *p2 = s2;
-  while (n-- > 0) {
-    if (*p1 != *p2) {
+  while(n-- > 0) {
+    if(*p1 != *p2) {
       return *p1 - *p2;
     }
     p1++;
