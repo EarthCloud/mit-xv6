@@ -10,9 +10,28 @@
 #define STACK_SIZE 8192
 #define MAX_THREAD 4
 
+struct ucontext {
+  uint64 ra;
+  uint64 sp;
+  // callee-saved
+  uint64 s0;
+  uint64 s1;
+  uint64 s2;
+  uint64 s3;
+  uint64 s4;
+  uint64 s5;
+  uint64 s6;
+  uint64 s7;
+  uint64 s8;
+  uint64 s9;
+  uint64 s10;
+  uint64 s11;
+};
+
 struct thread {
   char stack[STACK_SIZE]; /* the thread's stack */
   int  state;             /* FREE, RUNNING, RUNNABLE */
+  struct ucontext context; /* user thread context */
 };
 struct thread  all_thread[MAX_THREAD];
 struct thread *current_thread;
