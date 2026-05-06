@@ -22,3 +22,8 @@ xv6.out*
 submissions/
 ph
 barrier
+.cache/
+.clang-format
+.clangd
+format-project.sh
+compile_commands.json
