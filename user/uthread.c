@@ -29,9 +29,9 @@ struct ucontext {
 };
 
 struct thread {
-  char stack[STACK_SIZE]; /* the thread's stack */
-  int  state;             /* FREE, RUNNING, RUNNABLE */
-  struct ucontext context; /* user thread context */
+  char            stack[STACK_SIZE]; /* the thread's stack */
+  int             state;             /* FREE, RUNNING, RUNNABLE */
+  struct ucontext context;           /* user thread context */
 };
 struct thread  all_thread[MAX_THREAD];
 struct thread *current_thread;
@@ -80,6 +80,7 @@ thread_schedule(void)
      * Invoke thread_switch to switch from t to next_thread:
      * thread_switch(??, ??);
      */
+    thread_switch((uint64)&t->context, (uint64)&next_thread->context);
   } else
     next_thread = 0;
 }
