@@ -10,13 +10,13 @@ int
 main(void)
 {
   int i, n;
-  
-  while (1) {
+
+  while(1) {
     n = statistics(buf, SZ);
-    for (i = 0; i < n; i++) {
-      write(1, buf+i, 1);
+    for(i = 0; i < n; i++) {
+      write(1, buf + i, 1);
     }
-    if (n != SZ)
+    if(n != SZ)
       break;
   }
 

@@ -12,14 +12,14 @@
 #define NLOCK 500
 
 static struct spinlock *locks[NLOCK];
-struct spinlock lock_locks;
+struct spinlock         lock_locks;
 
 void
 freelock(struct spinlock *lk)
 {
   acquire(&lock_locks);
   int i;
-  for (i = 0; i < NLOCK; i++) {
+  for(i = 0; i < NLOCK; i++) {
     if(locks[i] == lk) {
       locks[i] = 0;
       break;
@@ -29,10 +29,11 @@ freelock(struct spinlock *lk)
 }
 
 static void
-findslot(struct spinlock *lk) {
+findslot(struct spinlock *lk)
+{
   acquire(&lock_locks);
   int i;
-  for (i = 0; i < NLOCK; i++) {
+  for(i = 0; i < NLOCK; i++) {
     if(locks[i] == 0) {
       locks[i] = lk;
       release(&lock_locks);
@@ -46,14 +47,14 @@ findslot(struct spinlock *lk) {
 void
 initlock(struct spinlock *lk, char *name)
 {
-  lk->name = name;
+  lk->name   = name;
   lk->locked = 0;
-  lk->cpu = 0;
+  lk->cpu    = 0;
 #ifdef LAB_LOCK
   lk->nts = 0;
-  lk->n = 0;
+  lk->n   = 0;
   findslot(lk);
-#endif  
+#endif
 }
 
 // Acquire the lock.
@@ -66,8 +67,8 @@ acquire(struct spinlock *lk)
     panic("acquire");
 
 #ifdef LAB_LOCK
-    __sync_fetch_and_add(&(lk->n), 1);
-#endif      
+  __sync_fetch_and_add(&(lk->n), 1);
+#endif
 
   // On RISC-V, sync_lock_test_and_set turns into an atomic swap:
   //   a5 = 1
@@ -77,7 +78,7 @@ acquire(struct spinlock *lk)
 #ifdef LAB_LOCK
     __sync_fetch_and_add(&(lk->nts), 1);
 #else
-   ;
+    ;
 #endif
   }
 
@@ -171,7 +172,8 @@ snprint_lock(char *buf, int sz, struct spinlock *lk)
 }
 
 int
-statslock(char *buf, int sz) {
+statslock(char *buf, int sz)
+{
   int n;
   int tot = 0;
 
@@ -183,11 +185,11 @@ statslock(char *buf, int sz) {
     if(strncmp(locks[i]->name, "bcache", strlen("bcache")) == 0 ||
        strncmp(locks[i]->name, "kmem", strlen("kmem")) == 0) {
       tot += locks[i]->nts;
-      n += snprint_lock(buf +n, sz-n, locks[i]);
+      n += snprint_lock(buf + n, sz - n, locks[i]);
     }
   }
-  
-  n += snprintf(buf+n, sz-n, "--- top 5 contended locks:\n");
+
+  n += snprintf(buf + n, sz - n, "--- top 5 contended locks:\n");
   int last = 100000000;
   // stupid way to compute top 5 contended locks
   for(int t = 0; t < 5; t++) {
@@ -199,11 +201,11 @@ statslock(char *buf, int sz) {
         top = i;
       }
     }
-    n += snprint_lock(buf+n, sz-n, locks[top]);
+    n += snprint_lock(buf + n, sz - n, locks[top]);
     last = locks[top]->nts;
   }
-  n += snprintf(buf+n, sz-n, "tot= %d\n", tot);
-  release(&lock_locks);  
+  n += snprintf(buf + n, sz - n, "tot= %d\n", tot);
+  release(&lock_locks);
   return n;
 }
 #endif
