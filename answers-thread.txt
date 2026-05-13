@@ -1,0 +1,3 @@
+On line 54, when insert the new entry, the ref to same table can be passed to the insert function in multiple threads.
+Once step to insert function, on line 35, *p(the first entry of the table) can be overwritten.
+The last one executing line 35 will be inserted into the list, while others will be orphaned.
